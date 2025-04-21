@@ -1,0 +1,1 @@
+This project contains the code for a fully automated maskless laser lithography machine. It has four main functions; filter selection, shutter control, xy-stage control, and laser auto focus. Filter selection, shutter control and laser auto focus all use Arduino, servo and stepper motors and so this code will be blocked together.

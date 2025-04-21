@@ -1,0 +1,100 @@
+// Pin definitions for stepper motor driver
+int DIR = 3;          // Direction control
+int STEP = 2;         // Step pulse
+int MS1 = 13;         // Microstepping control 1
+int MS2 = 9;          // Microstepping control 2
+int SLEEP = 12;       // Sleep mode control
+
+// Default movement settings
+int stepDelay = 800;  // Default delay in microseconds (speed control)
+int stepsToMove = 200; // Default steps per command
+
+bool stopMotion = false; // Emergency stop flag
+
+void setup() {
+  Serial.begin(9600);     // Open serial connection at 9600bps
+  
+  // Set pin modes
+  pinMode(DIR, OUTPUT);
+  pinMode(STEP, OUTPUT);
+  pinMode(MS1, OUTPUT);
+  pinMode(MS2, OUTPUT);
+  pinMode(SLEEP, OUTPUT);
+  
+  // Set microstepping to 1/8 step mode
+  digitalWrite(MS1, HIGH);
+  digitalWrite(MS2, HIGH);
+
+  // Wake up the motor driver
+  digitalWrite(SLEEP, HIGH);
+  
+  Serial.println("Stepper ready. Send commands: UP [steps] [speed] | DOWN [steps] [speed] | STOP");
+}
+
+void loop() {
+  while(Serial.available() < 0)
+  {}
+  Serial.println("1");
+  String command = Serial.readStringUntil('\n');  // Read incoming command
+  command.trim();  // Remove extra spaces or newlines
+
+  // Parse command
+  if (command.startsWith("UP")) {
+    processCommand(command, HIGH);  // Move up (DIR = HIGH)
+    Serial.println("2");
+  } 
+  else if (command.startsWith("DOWN")) {
+    processCommand(command, LOW);   // Move down (DIR = LOW)
+    Serial.println("3");
+  } 
+  else if (command == "STOP") {
+    stopMotion = true;  // Set stop flag
+    Serial.println("Stopping motion.");
+  }
+  
+  
+}
+
+// Function to process movement commands
+void processCommand(String cmd, int direction) {
+  stopMotion = false;  // Reset stop flag
+  
+  // Extract step count and speed from command
+  int extractedSteps = extractValue(cmd, 1, stepsToMove);  // Default to stepsToMove if not provided
+  int extractedSpeed = extractValue(cmd, 2, stepDelay);    // Default to stepDelay if not provided
+
+  // Apply settings
+  digitalWrite(DIR, direction);  
+  Serial.print("Moving "); 
+  Serial.print((direction == HIGH) ? "UP " : "DOWN ");
+  Serial.print(extractedSteps);
+  Serial.print(" steps at speed ");
+  Serial.println(extractedSpeed);
+
+  // Perform step movement
+  for (int i = 0; i < extractedSteps; i++) {
+    if (stopMotion) break;  // Stop immediately if emergency stop is triggered
+
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(extractedSpeed);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(extractedSpeed);
+  }
+
+  Serial.println("Motion complete.");
+}
+
+// Function to extract numerical values from the command
+int extractValue(String cmd, int index, int defaultValue) {
+  int spaceIndex1 = cmd.indexOf(' '); // First space (after command)
+  if (spaceIndex1 == -1) return defaultValue; // No extra values given
+
+  int spaceIndex2 = cmd.indexOf(' ', spaceIndex1 + 1); // Second space (after first value)
+  if (index == 1) {
+    return cmd.substring(spaceIndex1 + 1, (spaceIndex2 == -1 ? cmd.length() : spaceIndex2)).toInt();
+  }
+  if (index == 2 && spaceIndex2 != -1) {
+    return cmd.substring(spaceIndex2 + 1).toInt();
+  }
+  return defaultValue;
+}

@@ -1,0 +1,297 @@
+#include <AccelStepper.h>
+
+const int stepsPerRevolution = 200;
+
+
+#define pwmA 3
+#define pwmB 11
+#define brakeA 9
+#define brakeB 8
+#define dirA 12
+#define dirB 13
+#include <Servo.h>
+#include <Firmata.h>
+
+// Pin definitions for stepper motor driver
+int DIR = 5;          // Direction control reassigned to 5 from 3 
+int STEP = 2;         // Step pulse
+int MS1 = 7;         // Microstepping control 1 reassigned to 7 from 13
+int MS2 = 10;          // Microstepping control 2 reassigned to 10 from 9
+int SLEEP = 6;       // Sleep mode control reassigned to 6 from 12
+
+
+Servo myServo;
+const int servoPin = 4;
+// interface type
+#define MotorInterfaceType 2
+
+// new instance
+AccelStepper stepper = AccelStepper(MotorInterfaceType, dirA, dirB);
+
+// Define button pins
+int button1Pin = 4;  //not used anymore
+int button2Pin = 5;  // not use anymore
+const int switchpin = 2;
+char receivedInt = '\0';
+int filterIndex = -1;
+int changeStepperState = -1;
+// vector for storing the filter placements
+int filters[] = {
+  //-1,
+  0, //now 0 used to be -60 for filter 1
+  -80,
+  -114,
+  -130,
+  -146,
+  -162,
+  -178,
+  -194,
+  -210,
+  -230,
+};
+
+String info[] = {
+  //"None",
+  "0.1",
+  "0.2",
+  "0.3",
+  "0.4",
+  "0.5",
+  "0.8",
+  "1.0",
+  "2.0",
+  "3.0",
+  "4.0"
+};
+
+
+int pos = 0;    // variable to store the servo position
+
+void setup() {
+  // Set the PWM and brake pins so that the direction pins can be used to control the motor
+  pinMode(pwmA, OUTPUT);
+  pinMode(pwmB, OUTPUT);
+  pinMode(brakeA, OUTPUT);
+  pinMode(brakeB, OUTPUT);
+  pinMode(switchpin, INPUT_PULLUP);
+
+  digitalWrite(pwmA, HIGH);
+  digitalWrite(pwmB, HIGH);
+  digitalWrite(brakeA, LOW);
+  digitalWrite(brakeB, LOW);
+  //byte pin; //THIS
+
+
+    // attach servos from first digital pin up to max number of
+    // servos supported for the board
+  //THIS
+  //for (pin = 0; pin < TOTAL_PINS; pin++) {
+  //  if (IS_PIN_DIGITAL(pin)) {
+  //    if (servoCount < MAX_SERVOS) {
+  //      servoPinMap[pin] = servoCount;
+
+  //servos[servoPinMap[9]].attach(PIN_TO_DIGITAL(9));
+  myServo.attach(servoPin);
+
+  //      servoCount++;
+  //    }
+  //  }
+  //}
+
+
+  // Set up button pins:
+  //pinMode(button1Pin, INPUT_PULLUP);
+  //pinMode(button2Pin, INPUT_PULLUP);
+
+  // Set the maximum steps per second and acceleration
+  // stepper.setMaxSpeed(600);
+  // stepper.setAcceleration(300);
+
+  Serial.begin(9600);
+  Serial.println("Getting Ready");
+
+
+  // Homing: Move in the negative direction until limit switch is triggered
+  // OlD HOMING
+  // while (digitalRead(switchpin) != LOW) {
+  //   stepper.setSpeed(200); // Set a constant speed in the negative direction
+  //   stepper.runSpeed(); // Keep running until the limit switch is triggered
+  // }
+  // stepper.stop(); // Stop the motor once the switch is triggered
+  // stepper.setCurrentPosition(0); // Set the current position as zero
+  // Serial.println("Homing complete. Ready for filter selection.");
+//for (pos = 120; pos >= 0; pos -= 120) { 
+  myServo.write(0);
+  //delay(1000);
+//}
+ 
+  // NEW HOMING
+  Serial.println("Starting homing...");
+  stepper.setMaxSpeed(600);      
+  stepper.setAcceleration(300);  
+
+  // Run until limit switch is pressed
+  while (digitalRead(switchpin) != LOW) {
+    stepper.move(10);  
+    stepper.run();
+  }
+
+  stepper.stop();                
+  stepper.setCurrentPosition(0);  
+  Serial.println("Homing complete.");
+  Serial.print("Ready");
+  Serial.begin(9600);     // Open serial connection at 9600bps
+  
+  // Set pin modes
+  pinMode(DIR, OUTPUT);
+  pinMode(STEP, OUTPUT);
+  pinMode(MS1, OUTPUT);
+  pinMode(MS2, OUTPUT);
+  pinMode(SLEEP, OUTPUT);
+  
+  // Set microstepping to 1/8 step mode
+  digitalWrite(MS1, HIGH);
+  digitalWrite(MS2, HIGH);
+
+  // Wake up the motor driver
+  digitalWrite(SLEEP, HIGH);
+  
+  Serial.println("Stepper ready. Send commands: UP [steps] [speed] | DOWN [steps] [speed] | STOP");
+
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    char receivedChar = Serial.read(); 
+
+    // Clear the Serial buffer 
+    while (Serial.available() > 0) {
+      Serial.read();
+    }
+
+    // Check if the input is a digit
+    if (isdigit(receivedChar)) {
+      int receivedInt = receivedChar - '0'; // Convert char to integer
+
+      if (receivedInt >= 1 && receivedInt <= 10) {
+        for (pos = 120; pos >= 0; pos -= 120) { 
+        myServo.write(0);
+        delay(500); // ???
+        }
+        stepper.moveTo(filters[receivedInt]);
+        Serial.println("You are using filter " + info[receivedInt]);
+      } else if (receivedInt == 0) {
+        stepper.moveTo(0);
+        Serial.println("Invalid Input. Returning to 0");
+      }
+    }
+    // 
+    else if (receivedChar == 'o' || receivedChar == 'O') {
+      for (pos = 0; pos <= 120; pos += 120) { 
+        myServo.write(120);
+        delay(1000);  /// are these fine?   
+      }
+      Serial.println("Shutter closed.");
+    }
+    else if (receivedChar == 'c' || receivedChar == 'C') {
+      for (pos = 120; pos >= 0; pos -= 120) { 
+        myServo.write(0);
+        delay(1000);   
+      }
+      Serial.println("Shutter opened.");
+    }
+    else {
+      Serial.println("Invalid Input. Please enter a number (0-10), 'c', or 'o'.");
+    }
+  }
+
+  // Keep the stepper motor running
+  stepper.run();
+    while(Serial.available() < 0)
+  {}
+  Serial.println("1");
+  String command = Serial.readStringUntil('\n');  // Read incoming command
+  command.trim();  // Remove extra spaces or newlines
+
+  // Parse command
+  if (command.startsWith("UP")) {
+    processCommand(command, HIGH);  // Move up (DIR = HIGH)
+    Serial.println("2");
+  } 
+  else if (command.startsWith("DOWN")) {
+    processCommand(command, LOW);   // Move down (DIR = LOW)
+    Serial.println("3");
+  } 
+  else if (command == "STOP") {
+    stopMotion = true;  // Set stop flag
+    Serial.println("Stopping motion.");
+  }
+  
+  
+}
+
+// Function to process movement commands
+void processCommand(String cmd, int direction) {
+  stopMotion = false;  // Reset stop flag
+  
+  // Extract step count and speed from command
+  int extractedSteps = extractValue(cmd, 1, stepsToMove);  // Default to stepsToMove if not provided
+  int extractedSpeed = extractValue(cmd, 2, stepDelay);    // Default to stepDelay if not provided
+
+  // Apply settings
+  digitalWrite(DIR, direction);  
+  Serial.print("Moving "); 
+  Serial.print((direction == HIGH) ? "UP " : "DOWN ");
+  Serial.print(extractedSteps);
+  Serial.print(" steps at speed ");
+  Serial.println(extractedSpeed);
+
+  // Perform step movement
+  for (int i = 0; i < extractedSteps; i++) {
+    if (stopMotion) break;  // Stop immediately if emergency stop is triggered
+
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(extractedSpeed);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(extractedSpeed);
+  }
+
+  Serial.println("Motion complete.");
+}
+
+// Function to extract numerical values from the command
+int extractValue(String cmd, int index, int defaultValue) {
+  int spaceIndex1 = cmd.indexOf(' '); // First space (after command)
+  if (spaceIndex1 == -1) return defaultValue; // No extra values given
+
+  int spaceIndex2 = cmd.indexOf(' ', spaceIndex1 + 1); // Second space (after first value)
+  if (index == 1) {
+    return cmd.substring(spaceIndex1 + 1, (spaceIndex2 == -1 ? cmd.length() : spaceIndex2)).toInt();
+  }
+  if (index == 2 && spaceIndex2 != -1) {
+    return cmd.substring(spaceIndex2 + 1).toInt();
+  }
+  return defaultValue;
+}
+
+
+// Pin definitions for stepper motor driver
+int DIR = 3;          // Direction control reassigned to 5
+int STEP = 2;         // Step pulse
+int MS1 = 13;         // Microstepping control 1 reassigned to 7
+int MS2 = 9;          // Microstepping control 2 reassigned to 10 
+int SLEEP = 12;       // Sleep mode control reassigned to 6
+
+// Default movement settings
+int stepDelay = 800;  // Default delay in microseconds (speed control)
+int stepsToMove = 200; // Default steps per command
+
+bool stopMotion = false; // Emergency stop flag
+
+void setup() {
+
+}
+
+void loop() {
+
+}

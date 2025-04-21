@@ -1,0 +1,185 @@
+#include <AccelStepper.h>
+
+const int stepsPerRevolution = 200;
+
+
+#define pwmA 3
+#define pwmB 11
+#define brakeA 9
+#define brakeB 8
+#define dirA 12
+#define dirB 13
+#include <Servo.h>
+#include <Firmata.h>
+
+Servo myServo;
+const int servoPin = 10;
+// interface type
+#define MotorInterfaceType 2
+
+// new instance
+AccelStepper stepper = AccelStepper(MotorInterfaceType, dirA, dirB);
+
+// Define button pins
+int button1Pin = 4;  //not used anymore
+int button2Pin = 5;  // not use anymore
+const int switchpin = 2;
+char receivedInt = '\0';
+int filterIndex = -1;
+int changeStepperState = -1;
+// vector for storing the filter placements
+int filters[] = {
+  //-1,
+  0, //now 0 used to be -60 for filter 1
+  -80,
+  -114,
+  -130,
+  -146,
+  -162,
+  -178,
+  -194,
+  -210,
+  -230,
+};
+
+String info[] = {
+  //"None",
+  "0.1",
+  "0.2",
+  "0.3",
+  "0.4",
+  "0.5",
+  "0.8",
+  "1.0",
+  "2.0",
+  "3.0",
+  "4.0"
+};
+
+
+int pos = 0;    // variable to store the servo position
+
+void setup() {
+  // Set the PWM and brake pins so that the direction pins can be used to control the motor
+  pinMode(pwmA, OUTPUT);
+  pinMode(pwmB, OUTPUT);
+  pinMode(brakeA, OUTPUT);
+  pinMode(brakeB, OUTPUT);
+  pinMode(switchpin, INPUT_PULLUP);
+
+  digitalWrite(pwmA, HIGH);
+  digitalWrite(pwmB, HIGH);
+  digitalWrite(brakeA, LOW);
+  digitalWrite(brakeB, LOW);
+  //byte pin; //THIS
+
+
+    // attach servos from first digital pin up to max number of
+    // servos supported for the board
+  //THIS
+  //for (pin = 0; pin < TOTAL_PINS; pin++) {
+  //  if (IS_PIN_DIGITAL(pin)) {
+  //    if (servoCount < MAX_SERVOS) {
+  //      servoPinMap[pin] = servoCount;
+
+  //servos[servoPinMap[9]].attach(PIN_TO_DIGITAL(9));
+  myServo.attach(servoPin);
+
+  //      servoCount++;
+  //    }
+  //  }
+  //}
+
+
+  // Set up button pins:
+  //pinMode(button1Pin, INPUT_PULLUP);
+  //pinMode(button2Pin, INPUT_PULLUP);
+
+  // Set the maximum steps per second and acceleration
+  // stepper.setMaxSpeed(600);
+  // stepper.setAcceleration(300);
+
+  Serial.begin(9600);
+  Serial.println("Getting Ready");
+
+
+  // Homing: Move in the negative direction until limit switch is triggered
+  // OlD HOMING
+  // while (digitalRead(switchpin) != LOW) {
+  //   stepper.setSpeed(200); // Set a constant speed in the negative direction
+  //   stepper.runSpeed(); // Keep running until the limit switch is triggered
+  // }
+  // stepper.stop(); // Stop the motor once the switch is triggered
+  // stepper.setCurrentPosition(0); // Set the current position as zero
+  // Serial.println("Homing complete. Ready for filter selection.");
+//for (pos = 120; pos >= 0; pos -= 120) { 
+  myServo.write(0);
+  //delay(1000);
+//}
+ 
+  // NEW HOMING
+  Serial.println("Starting homing...");
+  stepper.setMaxSpeed(600);      
+  stepper.setAcceleration(300);  
+
+  // Run until limit switch is pressed
+  while (digitalRead(switchpin) != LOW) {
+    stepper.move(10);  
+    stepper.run();
+  }
+
+  stepper.stop();                
+  stepper.setCurrentPosition(0);  
+  Serial.println("Homing complete.");
+  Serial.print("Ready");
+
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    char receivedChar = Serial.read(); 
+
+    // Clear the Serial buffer 
+    while (Serial.available() > 0) {
+      Serial.read();
+    }
+
+    // Check if the input is a digit
+    if (isdigit(receivedChar)) {
+      int receivedInt = receivedChar - '0'; // Convert char to integer
+
+      if (receivedInt >= 1 && receivedInt <= 10) {
+        for (pos = 120; pos >= 0; pos -= 120) { 
+        myServo.write(0);
+        delay(500); // ???
+        }
+        stepper.moveTo(filters[receivedInt]);
+        Serial.println("You are using filter " + info[receivedInt]);
+      } else if (receivedInt == 0) {
+        stepper.moveTo(0);
+        Serial.println("Invalid Input. Returning to 0");
+      }
+    }
+    // 
+    else if (receivedChar == 'o' || receivedChar == 'O') {
+      for (pos = 0; pos <= 120; pos += 120) { 
+        myServo.write(120);
+        delay(1000);  /// are these fine?   
+      }
+      Serial.println("Shutter closed.");
+    }
+    else if (receivedChar == 'c' || receivedChar == 'C') {
+      for (pos = 120; pos >= 0; pos -= 120) { 
+        myServo.write(0);
+        delay(1000);   
+      }
+      Serial.println("Shutter opened.");
+    }
+    else {
+      Serial.println("Invalid Input. Please enter a number (0-10), 'c', or 'o'.");
+    }
+  }
+
+  // Keep the stepper motor running
+  stepper.run();
+}

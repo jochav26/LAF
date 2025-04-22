@@ -161,6 +161,54 @@ void setup() {
 }
 
 void loop() {
+
+char input;
+
+switch (input) {
+  case 'o':
+   //call shutter code to open
+    break;
+  case 'c':
+    //call shutter code to close
+    break;
+  case '0':
+    // call filter code to 0
+    break;
+  case '1':
+    // call filter code to 1
+    break;
+  case '2':
+    // call filter code to 2
+    break;
+  case '3':
+    // call filter code to 3
+    break;
+  case '4':
+    // call filter code to 4
+    break;
+  case '5':
+    // call filter code to 5
+    break;
+  case '6':
+    // call filter code to 6
+    break;
+  case '7':
+    // call filter code to 7
+    break;
+  case '8':
+    // call filter code to 8
+    break;
+  case '9':
+    // call filter code to 9
+    break;
+  case 'U':
+    // call z-axis code to 'UP'
+    break;
+  case 'D':
+    // call z=axis code to 'DOWN'
+    break;
+}
+
   if (Serial.available() > 0) {
     char receivedChar = Serial.read(); 
 
@@ -274,24 +322,3 @@ int extractValue(String cmd, int index, int defaultValue) {
   return defaultValue;
 }
 
-
-// Pin definitions for stepper motor driver
-int DIR = 3;          // Direction control reassigned to 5
-int STEP = 2;         // Step pulse
-int MS1 = 13;         // Microstepping control 1 reassigned to 7
-int MS2 = 9;          // Microstepping control 2 reassigned to 10 
-int SLEEP = 12;       // Sleep mode control reassigned to 6
-
-// Default movement settings
-int stepDelay = 800;  // Default delay in microseconds (speed control)
-int stepsToMove = 200; // Default steps per command
-
-bool stopMotion = false; // Emergency stop flag
-
-void setup() {
-
-}
-
-void loop() {
-
-}

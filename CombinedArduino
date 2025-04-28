@@ -13,15 +13,15 @@ const int stepsPerRevolution = 200;
 #include <Firmata.h>
 
 // Pin definitions for stepper motor driver
-int DIR = 5;          // Direction control reassigned to 5 from 3 
-int STEP = 2;         // Step pulse
-int MS1 = 7;         // Microstepping control 1 reassigned to 7 from 13
-int MS2 = 10;          // Microstepping control 2 reassigned to 10 from 9
-int SLEEP = 6;       // Sleep mode control reassigned to 6 from 12
+#define DIR = 5;          // Direction control reassigned to 5 from 3 
+#define STEP = 2;         // Step pulse
+#define MS1 = 7;         // Microstepping control 1 reassigned to 7 from 13
+#define MS2 = 10;          // Microstepping control 2 reassigned to 10 from 9
+#define SLEEP = 6;       // Sleep mode control reassigned to 6 from 12
 
 
 Servo myServo;
-const int servoPin = 4;
+#define servoPin = 4;
 // interface type
 #define MotorInterfaceType 2
 
@@ -29,9 +29,9 @@ const int servoPin = 4;
 AccelStepper stepper = AccelStepper(MotorInterfaceType, dirA, dirB);
 
 // Define button pins
-int button1Pin = 4;  //not used anymore
-int button2Pin = 5;  // not use anymore
-const int switchpin = 2;
+//int button1Pin = 4;  //not used anymore
+//int button2Pin = 5;  // not use anymore
+#define switchpin = 1;
 char receivedInt = '\0';
 int filterIndex = -1;
 int changeStepperState = -1;
@@ -209,6 +209,8 @@ switch (input) {
     break;
 }
 
+// START OF SHUTTER AND FILTER CODE
+
   if (Serial.available() > 0) {
     char receivedChar = Serial.read(); 
 
@@ -252,6 +254,8 @@ switch (input) {
       Serial.println("Invalid Input. Please enter a number (0-10), 'c', or 'o'.");
     }
   }
+ 
+// START OF Z-AXIS CODE
 
   // Keep the stepper motor running
   stepper.run();
@@ -321,4 +325,3 @@ int extractValue(String cmd, int index, int defaultValue) {
   }
   return defaultValue;
 }
-

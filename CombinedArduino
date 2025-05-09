@@ -164,6 +164,15 @@ void setup() {
 
 void loop() {
 
+// Run stepper continuously (non-blocking)
+stepper.run();
+// Only proceed if there's serial input
+if (Serial.available()) {
+  String command = Serial.readStringUntil('\n');
+  command.trim();  // Remove whitespace and newline chars
+
+
+
 char input;
 
 switch (input) {
@@ -178,83 +187,76 @@ switch (input) {
     Serial.println("Shutter opened.");
     break;
   case '0':
-    int receivedInt = command.toInt();
     myServo.write(0);
     delay(500);
     stepper.moveTo(filters[receivedInt]);
     Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '1':
-    int receivedInt = command.toInt();
     myServo.write(0);
     delay(500);
     stepper.moveTo(filters[receivedInt]);
     Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '2':
-    int receivedInt = command.toInt();
     myServo.write(0);
     delay(500);
     stepper.moveTo(filters[receivedInt]);
     Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '3':
-    int receivedInt = command.toInt();
     myServo.write(0);
     delay(500);
     stepper.moveTo(filters[receivedInt]);
     Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '4':
-    int receivedInt = command.toInt();
     myServo.write(0);
     delay(500);
     stepper.moveTo(filters[receivedInt]);
     Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '5':
-    int receivedInt = command.toInt();
     myServo.write(0);
     delay(500);
     stepper.moveTo(filters[receivedInt]);
     Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '6':
-    int receivedInt = command.toInt();
     myServo.write(0);
     delay(500);
     stepper.moveTo(filters[receivedInt]);
     Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '7':
-    int receivedInt = command.toInt();
     myServo.write(0);
     delay(500);
     stepper.moveTo(filters[receivedInt]);
     Serial.println("You are using filter " + info[receivedInt]);
   case '8':
-    int receivedInt = command.toInt();
     myServo.write(0);
     delay(500);
     stepper.moveTo(filters[receivedInt]);
     Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '9':
-    int receivedInt = command.toInt();
     myServo.write(0);
     delay(500);
     stepper.moveTo(filters[receivedInt]);
     Serial.println("You are using filter " + info[receivedInt]);
     break;
   case 'U':
-    (command.startsWith("UP")) {
-    processCommand(command, HIGH);}
+    (command.startsWith("UP")); {
+    processCommand(command, HIGH);
     break;
-  case 'D':
-    (command.startsWith("DOWN")) {
-    processCommand(command, LOW);
     }
+  case 'D':
+    (command.startsWith("DOWN")); {
+    processCommand(command, LOW);
+    
     break;
+    }
+}
 }
 
 // START OF SHUTTER AND FILTER CODE

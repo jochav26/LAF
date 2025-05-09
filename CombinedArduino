@@ -168,46 +168,92 @@ char input;
 
 switch (input) {
   case 'o':
-   //call shutter code to open
+    myServo.write(120);
+    delay(1000);
+    Serial.println("Shutter closed.");
     break;
   case 'c':
-    //call shutter code to close
+    myServo.write(0);
+    delay(1000);
+    Serial.println("Shutter opened.");
     break;
   case '0':
-    // call filter code to 0
+    int receivedInt = command.toInt();
+    myServo.write(0);
+    delay(500);
+    stepper.moveTo(filters[receivedInt]);
+    Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '1':
-    // call filter code to 1
+    int receivedInt = command.toInt();
+    myServo.write(0);
+    delay(500);
+    stepper.moveTo(filters[receivedInt]);
+    Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '2':
-    // call filter code to 2
+    int receivedInt = command.toInt();
+    myServo.write(0);
+    delay(500);
+    stepper.moveTo(filters[receivedInt]);
+    Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '3':
-    // call filter code to 3
+    int receivedInt = command.toInt();
+    myServo.write(0);
+    delay(500);
+    stepper.moveTo(filters[receivedInt]);
+    Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '4':
-    // call filter code to 4
+    int receivedInt = command.toInt();
+    myServo.write(0);
+    delay(500);
+    stepper.moveTo(filters[receivedInt]);
+    Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '5':
-    // call filter code to 5
+    int receivedInt = command.toInt();
+    myServo.write(0);
+    delay(500);
+    stepper.moveTo(filters[receivedInt]);
+    Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '6':
-    // call filter code to 6
+    int receivedInt = command.toInt();
+    myServo.write(0);
+    delay(500);
+    stepper.moveTo(filters[receivedInt]);
+    Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '7':
-    // call filter code to 7
-    break;
+    int receivedInt = command.toInt();
+    myServo.write(0);
+    delay(500);
+    stepper.moveTo(filters[receivedInt]);
+    Serial.println("You are using filter " + info[receivedInt]);
   case '8':
-    // call filter code to 8
+    int receivedInt = command.toInt();
+    myServo.write(0);
+    delay(500);
+    stepper.moveTo(filters[receivedInt]);
+    Serial.println("You are using filter " + info[receivedInt]);
     break;
   case '9':
-    // call filter code to 9
+    int receivedInt = command.toInt();
+    myServo.write(0);
+    delay(500);
+    stepper.moveTo(filters[receivedInt]);
+    Serial.println("You are using filter " + info[receivedInt]);
     break;
   case 'U':
-    // call z-axis code to 'UP'
+    (command.startsWith("UP")) {
+    processCommand(command, HIGH);}
     break;
   case 'D':
-    // call z=axis code to 'DOWN'
+    (command.startsWith("DOWN")) {
+    processCommand(command, LOW);
+    }
     break;
 }
 

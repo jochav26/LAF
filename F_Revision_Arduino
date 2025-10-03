@@ -1,0 +1,220 @@
+#include <Servo.h>
+#include <Firmata.h>
+
+// new pins
+#define MS2 7   
+#define DIR 8          
+#define STEP 9         // Step pulse
+#define MS1 10         
+#define SLEEP 11
+
+// new pin (driver 2)
+#define MS2_2 2  
+#define DIR_2 3           
+#define STEP_2 4         // Step pulse
+#define MS1_2 5         
+#define SLEEP_2 6
+
+
+Servo myServo;
+#define servoPin 13
+
+#define switchpin 12
+
+char receivedInt = '\0'; // not sure
+int filterIndex = -1; // unused?
+int changeStepperState = -1; // unused?
+
+
+int filters[] = {
+  340,  //0 (425-450) correct for sure
+  540,  //1
+  700,  //2
+  850,  //3
+  1020, //4
+  1180, //5
+  1260, //6
+  1635, //7 correct for sure
+  1750, //8 correct for sure
+  1870, //9 correct for sure
+};
+
+String info[] = {
+  //"None",
+  "0.1 ND1",
+  "0.2 ND2",
+  "0.3 ND3",
+  "0.4 ND4",
+  "0.5 ND5",
+  "0.8 ND6",
+  "1.0 ND7", //6
+  "2.0 ND8", //7 
+  "3.0 ND9", // 8 
+  "4.0 ND10" // 9
+};
+
+int pos = 0;    // variable to store the servo position
+
+
+void setup() {
+  // put your setup code here, to run once:
+
+  myServo.attach(servoPin);
+
+  Serial.begin(9600);
+  Serial.println("Getting Ready");
+
+  //myServo.write(0);
+
+
+
+
+  // Set pin modes
+  pinMode(DIR, OUTPUT);
+  pinMode(STEP, OUTPUT);
+  pinMode(MS1, OUTPUT);
+  pinMode(MS2, OUTPUT);
+  pinMode(SLEEP, OUTPUT);
+
+  pinMode(DIR_2, OUTPUT);
+  pinMode(STEP_2, OUTPUT);
+  pinMode(MS1_2, OUTPUT);
+  pinMode(MS2_2, OUTPUT);
+  pinMode(SLEEP_2, OUTPUT);
+  
+  // Set microstepping to 1/8 step mode
+  digitalWrite(MS1, HIGH);
+  digitalWrite(MS2, HIGH);
+  digitalWrite(MS1_2, HIGH);
+  digitalWrite(MS2_2, HIGH);
+  // Wake up the motor driver
+  digitalWrite(SLEEP, HIGH);
+  digitalWrite(SLEEP_2, HIGH);
+  //digitalWrite(DIR, LOW);    // or HIGH depending on your wiring
+  digitalWrite(DIR, HIGH);  // or HIGH
+
+
+  Serial.println("You should home the filter with input 'r' for reset");
+
+  // while (digitalRead(switchpin) != LOW) {
+
+  //   //stepper.move(10);  
+  //   //stepper.run();
+  //   //digitalWrite(STEP_2, HIGH);
+  //   digitalWrite(STEP, HIGH);
+
+  //   delayMicroseconds(100);
+  //   //digitalWrite(STEP_2, LOW);
+  //   digitalWrite(STEP, LOW);
+
+  //   delayMicroseconds(100);
+  // }
+
+  //Serial.println("Homing complete.");
+
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  while (Serial.available() !=1){
+    
+  }
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+
+// filter control in works
+
+    if (command.length() == 1 && isdigit(command[0])) {
+      int receivedInt = command.toInt();
+      digitalWrite(DIR, LOW);  // or HIGH
+
+      if (receivedInt >= 0 && receivedInt <= 9) {
+        //myServo.write(0);
+          //int stepsToMove = filters[receivedInt];  
+
+        
+          // here I include each filter location
+          //while (digitalRead(switchpin) != LOW) {
+           //stepper.move(10);  
+           //stepper.run();
+          // digitalWrite(STEP, HIGH);
+           //delayMicroseconds(100);
+           //digitalWrite(STEP, LOW);
+           //delayMicroseconds(100);
+           
+          //}
+         digitalWrite(DIR_2, LOW);      
+          for (int i = 0; i < filters[receivedInt]; i++) {
+            digitalWrite(STEP, HIGH);
+            delayMicroseconds(110);
+            digitalWrite(STEP, LOW);
+            delayMicroseconds(110);
+          }
+        Serial.println("You are using filter: " + info[receivedInt]);
+
+      }
+    }
+
+    // end of filter control
+
+
+
+    // === SHUTTER CONTROL ===
+    else if (command == "o" || command == "O") {
+      myServo.write(120);
+      delay(10);
+      Serial.println("Shutter Opened.");
+    } else if (command == "c" || command == "C") {
+      myServo.write(0);
+      delay(10);
+      Serial.println("Shutter Closed.");
+    }
+
+    // === Z-AXIS FIXED MOTION ===
+    else if (command == "U" || command == "u") {
+      Serial.println("Moving Z axis UP");
+
+      digitalWrite(DIR_2, HIGH);  // set direction
+      for (int i = 0; i < 60; i++) {
+        digitalWrite(STEP_2, HIGH);
+        delayMicroseconds(100);
+        digitalWrite(STEP_2, LOW);
+        delayMicroseconds(100);
+      }
+
+      Serial.println("Z axis move complete (UP).");
+    } else if (command == "D" || command == "d") {
+      Serial.println("Moving Z axis DOWN");
+
+      digitalWrite(DIR_2, LOW);  // set direction
+      for (int i = 0; i < 60; i++) {
+        digitalWrite(STEP_2, HIGH);
+        delayMicroseconds(100);
+        digitalWrite(STEP_2, LOW);
+        delayMicroseconds(100);
+      }
+
+      Serial.println("Z axis move complete (DOWN).");
+    } else if (command == "r") {
+        while (digitalRead(switchpin) != LOW) {
+
+        digitalWrite(DIR, HIGH);  // or HIGH
+        
+        digitalWrite(STEP, HIGH);
+        delayMicroseconds(100);
+        digitalWrite(STEP, LOW);
+        delayMicroseconds(100);
+        
+
+      } 
+      Serial.println("reset done");
+    }
+
+    // === INVALID COMMAND ===
+    else {
+      Serial.println("Invalid Input. Enter 0–9, 'C', 'O', 'r', 'U', or 'D'.");
+    }
+  }
+}
